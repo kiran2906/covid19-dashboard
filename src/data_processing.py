@@ -60,8 +60,8 @@ class COVIDDataProcessor:
         )["Deaths"].diff()
 
         # Handle negative values data correction
-        covid_data["New Cases"] = covid_data["New Cases"].clip(lower=0)
-        covid_data["New Deaths"] = covid_data["New Deaths"].clip(lower=0)
+        covid_data["New_Cases"] = covid_data["New Cases"].clip(lower=0)
+        covid_data["New_Deaths"] = covid_data["New Deaths"].clip(lower=0)
 
         # Calculate 7-day rolling averages
         covid_data["7_day Avg New Cases"] = (
