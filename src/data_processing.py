@@ -34,7 +34,7 @@ class COVIDDataProcessor:
             )
             # convert date string to dattime
             melted_df["Date"] = pd.to_datetime(melted_df["Date"])
-            return melted
+            return melted_df
 
         cases_long = melt_covid_data(self.cases, "Confirmed Cases")
         deaths_long = melt_covid_data(self.deaths, "Deaths")
