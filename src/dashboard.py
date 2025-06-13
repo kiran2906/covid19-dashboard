@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
+import json
 
 # Set page configuration
 st.set_page_config(
@@ -16,11 +17,12 @@ st.set_page_config(
 @st.cache_data
 def load_data():
     """Load Processed Data"""
-    covid_data = pd.read_csv("data/processed/covid_data.csv")
+    covid_data = pd.read_csv("data/processed/covid_data_processed.csv", index_col=0)
     covid_data["Date"] = pd.to_datetime(covid_data["Date"])
 
-    with open("data/processed/summary.json", "r") as f:
-        summary_stats = pd.read_json(f)
+    with open("data/processed/summary_stats.json", "r") as f:
+        summary_stats = json.load(f)
+        summary_stats = pd.DataFrame([summary_stats])
 
     return covid_data, summary_stats
 
@@ -34,14 +36,15 @@ def main():
         covid_data, summary_stats = load_data()
     except FileNotFoundError:
         st.error(
-            "Data is not loaded, make sure to run data collection and data processing scripts before running this script.."
+            "Data is not loaded, make sure to run data collection and data processing scripts before running this script."
         )
         st.stop()
-    # sidebar filters
-    st.sidebar("🔍 Filters")
+
+    # Sidebar filters
+    st.sidebar.header("🔍 Filters")
     countries = ["All"] + sorted(covid_data["Country/Region"].unique())
     selected_country = st.sidebar.selectbox("Select Country", countries)
-    date_range = st.sidebar.selection(
+    date_range = st.sidebar.date_input(
         "Select Date Range",
         value=(covid_data["Date"].min(), covid_data["Date"].max()),
         min_value=covid_data["Date"].min(),
@@ -67,9 +70,7 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        total_cases = (
-            filtered_data["Confirmed Cases"].max() if not filtered_data.empty else 0
-        )
+        total_cases = filtered_data["Cases"].max() if not filtered_data.empty else 0
         st.metric("Total Cases", f"{total_cases:,}")
 
     with col2:
@@ -133,42 +134,42 @@ def main():
             latest_data = filtered_data[
                 filtered_data["Date"] == filtered_data["Date"].max()
             ]
-            top_countries = latest_data.nlargest(20, "Confirmed Cases")
+            top_countries = latest_data.nlargest(20, "Cases")
 
             fig_geo = px.bar(
                 top_countries,
-                x="Confirmed Cases",
+                x="Cases",
                 y="Country/Region",
-                color="Confirmed Cases",
+                color="Cases",
                 title="Top 20 Countries by Confirmed Cases",
                 orientation="h",
             )
             fig_geo.update_layout(height=600)
             st.plotly_chart(fig_geo, use_container_width=True)
         else:
-            st.warning("NO Data available for selected filters.")
+            st.warning("No data available for selected filters.")
 
         # Healthcare Insights section
         st.header("🏥 Healthcare Insights")
 
-        with st.expnder("Key Findings"):
+        with st.expander("Key Findings"):
             st.write(
                 """
-                     1. **Peak Load Periods**: Identify when healthcare systems experienced maximum strain
-                     2. **Resource Allocation**: Understand regional variations in healthcare capacity needs
-                    3. **Recovery Patterns**: Analyze how different regions managed pandemic waves
-                    4. **Demographic Impact**: Examine which populations were most affected
-        
-                    **Business Value:**
-                    - Hospital capacity planning optimization
-                    - Resource allocation efficiency improvements
-                    - Emergency preparedness enhancement
-                    - Cost reduction through predictive insights
-                     """
+                1. **Peak Load Periods**: Identify when healthcare systems experienced maximum strain  
+                2. **Resource Allocation**: Understand regional variations in healthcare capacity needs  
+                3. **Recovery Patterns**: Analyze how different regions managed pandemic waves  
+                4. **Demographic Impact**: Examine which populations were most affected
+
+                **Business Value:**
+                - Hospital capacity planning optimization
+                - Resource allocation efficiency improvements
+                - Emergency preparedness enhancement
+                - Cost reduction through predictive insights
+                """
             )
-            # Footer
-            st.markdown("-----")
-            st.markdown("Dashboard created for healthcare analytics project.")
+        # Footer
+        st.markdown("-----")
+        st.markdown("Dashboard created for healthcare analytics project.")
 
 
 if __name__ == "__main__":

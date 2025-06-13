@@ -21,11 +21,10 @@ class COVIDDataProcessor:
 
     def transform_data(self):
         """Transform raw data into a usable format"""
-        # Melt the cases and deaths dataframes
 
+        # Melt the cases and deaths dataframes
         def melt_covid_data(df, value_name):
             date_cols = df.columns[4:]  # Skip the first 4 columns
-
             melted_df = df.melt(
                 id_vars=["Province/State", "Country/Region", "Lat", "Long"],
                 value_vars=date_cols,
@@ -52,29 +51,32 @@ class COVIDDataProcessor:
         covid_data = covid_data.sort_values(
             ["Country/Region", "Province/State", "Date"]
         )
-        covid_data["New Cases"] = covid_data.groupby(
+        covid_data["New_Cases"] = covid_data.groupby(
             ["Country/Region", "Province/State"]
         )["Confirmed Cases"].diff()
-        covid_data["New Deaths"] = covid_data.groupby(
+        covid_data["New_Deaths"] = covid_data.groupby(
             ["Country/Region", "Province/State"]
         )["Deaths"].diff()
 
         # Handle negative values data correction
-        covid_data["New_Cases"] = covid_data["New Cases"].clip(lower=0)
-        covid_data["New_Deaths"] = covid_data["New Deaths"].clip(lower=0)
+        covid_data["New_Cases"] = covid_data["New_Cases"].clip(lower=0)
+        covid_data["New_Deaths"] = covid_data["New_Deaths"].clip(lower=0)
+        print(covid_data.info())
 
         # Calculate 7-day rolling averages
+        covid_data = covid_data.reset_index(drop=True)
         covid_data["7_day Avg New Cases"] = (
-            covid_data.groupby(["Country/Region", "Province/State"])["New Cases"]
+            covid_data.groupby(["Country/Region", "Province/State"])["New_Cases"]
             .rolling(7)
             .mean()
             .reset_index(level=0, drop=True)
         )
+        print(covid_data.head())
         covid_data["7_day Avg New Deaths"] = (
-            covid_data.groupby(["Country/Region", "Province/State"])["New Deaths"]
+            covid_data.groupby(["Country/Region", "Province/State"])["New_Deaths"]
             .rolling(7)
             .mean()
-            .reset_index(level=0, drop=True)
+            .reset_index(0, drop=True)
         )
 
         return covid_data
